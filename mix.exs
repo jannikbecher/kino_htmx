@@ -12,11 +12,11 @@ defmodule KinoHtmx.MixProject do
       name: "KinoHtmx",
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      package: package()
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       extra_applications: [:logger],
@@ -24,13 +24,19 @@ defmodule KinoHtmx.MixProject do
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:kino, "~> 0.10"},
       {:bandit, ">= 0.7.7"},
       {:plug, "~> 1.14"},
       {:phoenix_html, "~> 3.3"}
+    ]
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/jannikbecher/kino_htmx"}
     ]
   end
 end
