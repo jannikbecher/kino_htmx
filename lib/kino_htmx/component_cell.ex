@@ -9,12 +9,14 @@ defmodule KinoHtmx.ComponentCell do
   def init(attrs, ctx) do
     type = attrs["type"] || "get"
     path = attrs["path"] || "/"
+    assigns = attrs["assigns"] || ""
     html = attrs["html"] || ""
 
     ctx =
       assign(ctx,
         type: type,
         path: path,
+        assigns: assigns,
         html: html
       )
 
@@ -23,7 +25,13 @@ defmodule KinoHtmx.ComponentCell do
 
   @impl true
   def handle_connect(ctx) do
-    {:ok, %{type: ctx.assigns.type, path: ctx.assigns.path, html: ctx.assigns.html}, ctx}
+    {:ok,
+     %{
+       type: ctx.assigns.type,
+       path: ctx.assigns.path,
+       assigns: ctx.assigns.assigns,
+       html: ctx.assigns.html
+     }, ctx}
   end
 
   @impl true
@@ -39,16 +47,22 @@ defmodule KinoHtmx.ComponentCell do
 
   @impl true
   def to_attrs(ctx) do
-    %{"type" => ctx.assigns.type, "path" => ctx.assigns.path, "html" => ctx.assigns.html}
+    %{
+      "type" => ctx.assigns.type,
+      "path" => ctx.assigns.path,
+      "assigns" => ctx.assigns.assigns,
+      "html" => ctx.assigns.html
+    }
   end
 
   @impl true
-  def to_source(%{"type" => type, "path" => path, "html" => html}) do
+  def to_source(%{"type" => type, "path" => path, "assigns" => assigns, "html" => html}) do
     quote do
       unquote(Macro.var(path_to_variable_name(path), __MODULE__)) =
         Htmx.Component.new(
           unquote(type),
           unquote(path),
+          unquote(assigns),
           unquote(html)
         )
     end

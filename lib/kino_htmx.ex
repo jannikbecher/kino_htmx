@@ -1,3 +1,3 @@
 defmodule KinoHtmx do
-  defdelegate iframe(), to: KinoHtmx.Iframe, as: :new
+  defdelegate output(), to: KinoHtmx.Iframe, as: :new
 end
