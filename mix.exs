@@ -13,6 +13,7 @@ defmodule KinoHtmx.MixProject do
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      docs: docs(),
       package: package()
     ]
   end
@@ -29,7 +30,17 @@ defmodule KinoHtmx.MixProject do
       {:kino, "~> 0.10"},
       {:bandit, ">= 0.7.7"},
       {:plug, "~> 1.14"},
-      {:phoenix_html, "~> 3.3"}
+      {:phoenix_html, "~> 3.3"},
+      {:ex_doc, "~> 0.30", only: :dev, runtime: false}
+    ]
+  end
+
+  defp docs do
+    [
+      main: "KinoHtmx",
+      source_url: "https://github.com/jannikbecher/kino_htmx",
+      source_ref: "v#{@version}",
+      extras: ["README.md"]
     ]
   end
 
