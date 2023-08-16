@@ -23,8 +23,14 @@ defmodule KinoHtmx.RouterCell do
   end
 
   @impl true
-  def scan_binding(pid, binding, _env) do
-    send(pid, {:scan_binding_result, binding})
+  def scan_binding(pid, _binding, %{context_modules: context_modules}) do
+    modules =
+      context_modules
+      |> Enum.map(&Atom.to_string/1)
+      |> Enum.filter(&String.starts_with?(&1, "Elixir.Htmx.Component"))
+      |> Enum.map(&String.to_existing_atom/1)
+
+    send(pid, {:scan_binding_result, modules})
   end
 
   @impl true
@@ -35,14 +41,8 @@ defmodule KinoHtmx.RouterCell do
   end
 
   @impl true
-  def handle_info({:scan_binding_result, binding}, ctx) do
-    components =
-      for {_key, val} <- binding, valid_data?(val) do
-        Map.from_struct(val)
-      end
-
-    ctx = assign(ctx, components: components)
-
+  def handle_info({:scan_binding_result, modules}, ctx) do
+    ctx = assign(ctx, components: modules)
     {:noreply, ctx}
   end
 
@@ -66,63 +66,79 @@ defmodule KinoHtmx.RouterCell do
 
   @impl true
   def to_source(attrs) do
-    quote do
-      defmodule Router do
-        use Plug.Router
-        import Htmx.Component
-
-        plug(Plug.Logger)
-        plug(:match)
-        plug(:dispatch)
-
-        get "/" do
-          send_resp(
-            conn,
-            200,
-            unquote("""
-            <html>
-              <head>
-                <title>HTMX</title>
-                <script src="https://unpkg.com/htmx.org@1.9.4" integrity="sha384-zUfuhFKKZCbHTY6aRR46gxiqszMk5tcHjsVFxnUo8VMus4kHGVdIYVbOYYNlKmHV" crossorigin="anonymous"></script>
-              </head>
-              <body>
-              #{attrs["source"]}
-              </body>
-            </html>
-            """)
-          )
-        end
-
-        unquote(
-          for %{type: type, path: path, assigns: assigns, html: html} <- attrs["components"] do
-            """
-            #{type} "#{path}" do
-              #{assigns}
-
-              ~HTML\"\"\"
-              #{html}
-              \"\"\"
-              |> Phoenix.HTML.Engine.encode_to_iodata!()
-              |> Enum.join()
-              |> then(&send_resp(conn, 200, &1))
-            end
-            """
-          end
-          |> Enum.join("\n\n")
-          |> Code.string_to_quoted!()
-        )
-
-        match _ do
-          send_resp(conn, 404, "not found")
-        end
-      end
-
-      bandit = {Bandit, plug: Router, scheme: :http, port: unquote(attrs["port"])}
-      Kino.start_child(bandit)
-    end
-    |> Kino.SmartCell.quoted_to_string()
+    for quoted <- to_quoted(attrs), do: Kino.SmartCell.quoted_to_string(quoted)
   end
 
-  defp valid_data?(%Htmx.Component{}), do: true
-  defp valid_data?(_data), do: false
+  defp to_quoted(attrs) do
+    [
+      quote do
+        defmodule Htmx.Component.Get.Root do
+          import Plug.Conn
+          import Htmx
+
+          def init(opts), do: opts
+
+          def call(conn, _opts), do: render_htmx(conn)
+
+          defp render_htmx(conn) do
+            assigns = %{}
+
+            html =
+              unquote(
+                """
+                ~HTMX\"\"\"
+                <html>
+                  <head>
+                    <title>HTMX</title>
+                    <script src="https://unpkg.com/htmx.org@1.9.4" integrity="sha384-zUfuhFKKZCbHTY6aRR46gxiqszMk5tcHjsVFxnUo8VMus4kHGVdIYVbOYYNlKmHV" crossorigin="anonymous"></script>
+                  </head>
+                  <body>
+                  #{attrs["source"]}
+                  </body>
+                </html>
+                \"\"\"
+                """
+                |> Code.string_to_quoted!()
+              )
+              |> Htmx.render()
+
+            send_resp(conn, 200, html)
+          end
+        end
+
+        Kino.nothing()
+      end,
+      quote do
+        defmodule Router do
+          use Plug.Router
+
+          plug(Plug.Logger)
+          plug(:match)
+          plug(:dispatch)
+
+          get("/", to: Htmx.Component.Get.Root)
+
+          unquote(
+            for component <- attrs["components"] do
+              {type, path} = component.request()
+              "#{type} \"#{path}\", to: #{component}"
+            end
+            |> Enum.join("\n\n")
+            |> Code.string_to_quoted!()
+          )
+
+          match _ do
+            send_resp(conn, 404, "not found")
+          end
+        end
+
+        Kino.nothing()
+      end,
+      quote do
+        bandit = {Bandit, plug: Router, scheme: :http, port: unquote(attrs["port"])}
+        Kino.start_child(bandit)
+        Kino.nothing()
+      end
+    ]
+  end
 end

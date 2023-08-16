@@ -9,7 +9,7 @@ defmodule KinoHtmx.ComponentCell do
   def init(attrs, ctx) do
     type = attrs["type"] || "get"
     path = attrs["path"] || "/"
-    assigns = attrs["assigns"] || ""
+    assigns = attrs["assigns"] || "%{}"
     html = attrs["html"] || ""
 
     ctx =
@@ -56,24 +56,56 @@ defmodule KinoHtmx.ComponentCell do
   end
 
   @impl true
-  def to_source(%{"type" => type, "path" => path, "assigns" => assigns, "html" => html}) do
-    quote do
-      unquote(Macro.var(path_to_variable_name(path), __MODULE__)) =
-        Htmx.Component.new(
-          unquote(type),
-          unquote(path),
-          unquote(assigns),
-          unquote(html)
-        )
-    end
+  def to_source(attrs) do
+    attrs
+    |> to_quoted()
     |> Kino.SmartCell.quoted_to_string()
   end
 
-  defp path_to_variable_name(path) do
+  def to_quoted(%{
+        "type" => type,
+        "path" => path,
+        "assigns" => assigns,
+        "html" => html
+      }) do
+    module_name =
+      Module.concat([Htmx.Component, String.capitalize(type), path_to_module_name(path)])
+
+    quote do
+      defmodule unquote(module_name) do
+        import Plug.Conn
+        import Htmx
+
+        def init(opts), do: opts
+
+        def call(conn, _opts) do
+          render_htmx(conn)
+        end
+
+        def request, do: {unquote(type), unquote(path)}
+
+        defp render_htmx(conn) do
+          assigns = unquote(assigns |> Code.string_to_quoted!())
+
+          unquote(
+            ["html =", "~HTMX\"\"\"", html, "\"\"\"", "|> Htmx.render()"]
+            |> Enum.join("\n")
+            |> Code.string_to_quoted!()
+          )
+
+          send_resp(conn, 200, html)
+        end
+      end
+
+      Kino.nothing()
+    end
+  end
+
+  defp path_to_module_name(path) do
     path
-    |> String.replace("/", "_")
-    |> String.replace(":", "_")
-    |> String.downcase()
-    |> String.to_atom()
+    |> String.split("/", trim: true)
+    |> Enum.reject(&String.starts_with?(&1, ":"))
+    |> Enum.map(&String.capitalize/1)
+    |> Enum.join()
   end
 end
