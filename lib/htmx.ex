@@ -9,12 +9,12 @@ defmodule Htmx do
       source: expr
     ]
 
-    EEx.compile_string(expr, options)
-  end
+    ast = EEx.compile_string(expr, options)
 
-  def render(htmx) do
-    htmx
-    |> Phoenix.HTML.Engine.encode_to_iodata!()
-    |> IO.iodata_to_binary()
+    quote do
+      unquote(ast)
+      |> Phoenix.HTML.Engine.encode_to_iodata!()
+      |> IO.iodata_to_binary()
+    end
   end
 end

@@ -73,36 +73,27 @@ defmodule KinoHtmx.RouterCell do
     [
       quote do
         defmodule Htmx.Component.Get.Root do
-          import Plug.Conn
-          import Htmx
+          use Htmx.Component, type: "get", path: "/"
 
-          def init(opts), do: opts
+          def mount(_), do: {:ok, %{}}
 
-          def call(conn, _opts), do: render_htmx(conn)
-
-          defp render_htmx(conn) do
-            assigns = %{}
-
-            html =
-              unquote(
-                """
-                ~HTMX\"\"\"
-                <html>
-                  <head>
-                    <title>HTMX</title>
-                    <script src="https://unpkg.com/htmx.org@1.9.4" integrity="sha384-zUfuhFKKZCbHTY6aRR46gxiqszMk5tcHjsVFxnUo8VMus4kHGVdIYVbOYYNlKmHV" crossorigin="anonymous"></script>
-                  </head>
-                  <body>
-                  #{attrs["source"]}
-                  </body>
-                </html>
-                \"\"\"
-                """
-                |> Code.string_to_quoted!()
-              )
-              |> Htmx.render()
-
-            send_resp(conn, 200, html)
+          def render(assigns) do
+            unquote(
+              """
+              ~HTMX\"\"\"
+              <html>
+                <head>
+                  <title>HTMX</title>
+                  <script src="https://unpkg.com/htmx.org@1.9.4" integrity="sha384-zUfuhFKKZCbHTY6aRR46gxiqszMk5tcHjsVFxnUo8VMus4kHGVdIYVbOYYNlKmHV" crossorigin="anonymous"></script>
+                </head>
+                <body>
+                #{attrs["source"]}
+                </body>
+              </html>
+              \"\"\"
+              """
+              |> Code.string_to_quoted!()
+            )
           end
         end
 
@@ -120,7 +111,7 @@ defmodule KinoHtmx.RouterCell do
 
           unquote(
             for component <- attrs["components"] do
-              {type, path} = component.request()
+              {type, path} = component.get_http_method()
               "#{type} \"#{path}\", to: #{component}"
             end
             |> Enum.join("\n\n")

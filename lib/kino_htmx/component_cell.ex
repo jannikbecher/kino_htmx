@@ -73,27 +73,22 @@ defmodule KinoHtmx.ComponentCell do
 
     quote do
       defmodule unquote(module_name) do
-        import Plug.Conn
-        import Htmx
+        use Htmx.Component, type: unquote(type), path: unquote(path)
 
-        def init(opts), do: opts
-
-        def call(conn, _opts) do
-          render_htmx(conn)
+        def mount(conn) do
+          assigns = unquote(assigns |> Code.string_to_quoted!())
+          {:ok, assigns}
         end
 
-        def request, do: {unquote(type), unquote(path)}
-
-        defp render_htmx(conn) do
-          assigns = unquote(assigns |> Code.string_to_quoted!())
-
+        def render(assigns) do
           unquote(
-            ["html =", "~HTMX\"\"\"", html, "\"\"\"", "|> Htmx.render()"]
-            |> Enum.join("\n")
+            """
+              ~HTMX\"\"\"
+              #{html}
+              \"\"\"
+            """
             |> Code.string_to_quoted!()
           )
-
-          send_resp(conn, 200, html)
         end
       end
 
