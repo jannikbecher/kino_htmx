@@ -1,4 +1,6 @@
 defmodule KinoHtmx.Iframe do
+  @moduledoc false
+
   use Kino.JS
 
   alias KinoHtmx.Settings

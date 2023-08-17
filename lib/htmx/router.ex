@@ -1,6 +1,6 @@
 defmodule Htmx.Router do
   @moduledoc """
-
+  Struct for building router output.
   """
 
   defstruct [:port]

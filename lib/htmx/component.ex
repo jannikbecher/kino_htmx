@@ -1,7 +1,32 @@
 defmodule Htmx.Component do
   @moduledoc """
+  A module for building and managing HTMX components.
+
+  This module provides a set of behaviours and 
+
+  ## Callbacks
+  - `mount/1`: Fetches data for the render function in stores it in the connection.
+  - `render/1`: Renders the component to a HTML string.
+
+  ## Usage
+
+  You can either use the SmartCell `KinoHtmx.ComponentCell` or
+  define your own cell:
+
+      defmodule Htmx.Component.Get.Path do
+        use Htmx.Component, method: "get", path: "/path"
+
+        def mount(conn), do: {:ok, conn}
+
+        def render(assigns), do: ~HTMX"<h1>Hello World"
+      end
+    
+  For the module name you need to use the following scheme:
+  `Htmx.Compnent.<method>.<path>` so the router can automatically
+  create the routes.
 
   """
+
   @callback mount(Plug.Conn.t()) :: {:ok, Plug.Conn.t()}
   @callback render(map()) :: String.t()
   defmacro __using__(opts) do

@@ -1,4 +1,8 @@
 defmodule Kino.HtmxComponent do
+  @moduledoc """
+  A kino for rendering the content of a component.
+  """
+
   use Kino.JS
 
   def new(component) do

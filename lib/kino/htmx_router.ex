@@ -1,4 +1,8 @@
 defmodule Kino.HtmxRouter do
+  @moduledoc """
+  A kino for displaying information of `Htmx.Router`.
+  """
+
   use Kino.JS
 
   def new(router) do
