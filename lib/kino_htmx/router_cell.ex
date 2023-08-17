@@ -42,7 +42,14 @@ defmodule KinoHtmx.RouterCell do
 
   @impl true
   def handle_info({:scan_binding_result, modules}, ctx) do
-    ctx = assign(ctx, components: modules)
+    components =
+      Enum.map(modules, fn module ->
+        module.component_struct()
+        |> Map.from_struct()
+      end)
+
+    broadcast_event(ctx, "update_components", %{components: components})
+    ctx = assign(ctx, components: components)
     {:noreply, ctx}
   end
 
@@ -112,9 +119,8 @@ defmodule KinoHtmx.RouterCell do
           get("/", to: Htmx.Component.Get.Root)
 
           unquote(
-            for component <- attrs["components"] do
-              {method, path} = component.get_http_method()
-              "#{method} \"#{path}\", to: #{component}"
+            for %{module: module, method: method, path: path} <- attrs["components"] do
+              "#{method} \"#{path}\", to: #{module}"
             end
             |> Enum.join("\n\n")
             |> Code.string_to_quoted!()
@@ -130,7 +136,7 @@ defmodule KinoHtmx.RouterCell do
         Kino.start_child(bandit)
       end,
       quote do
-        Htmx.Router.kino_output()
+        Htmx.Router.kino_output(unquote(attrs["port"]))
       end
     ]
   end

@@ -22,7 +22,13 @@ defmodule Htmx.Component do
         send_resp(conn, 200, html)
       end
 
-      def get_http_method, do: {unquote(method), unquote(path)}
+      def component_struct() do
+        Htmx.Component.new(__MODULE__, unquote(method), unquote(path), "")
+      end
+
+      def component_struct(html) do
+        Htmx.Component.new(__MODULE__, unquote(method), unquote(path), html)
+      end
 
       def kino_output() do
         conn = Plug.Test.conn(unquote(method), unquote(path))
@@ -46,7 +52,7 @@ defmodule Htmx.Component do
           end)
 
         html = render(assigns)
-        Htmx.Component.new(html)
+        component_struct(html)
       end
 
       defp assign(conn, keyword) do
@@ -57,10 +63,13 @@ defmodule Htmx.Component do
     end
   end
 
-  defstruct [:html]
+  defstruct [:module, :method, :path, :html]
 
-  def new(html) do
+  def new(module, method, path, html) do
     %__MODULE__{
+      module: module,
+      method: method,
+      path: path,
       html: html
     }
   end
