@@ -76,8 +76,8 @@ defmodule KinoHtmx.ComponentCell do
         use Htmx.Component, type: unquote(type), path: unquote(path)
 
         def mount(conn) do
-          assigns = unquote(assigns |> Code.string_to_quoted!())
-          {:ok, assigns}
+          unquote(assigns |> Code.string_to_quoted!())
+          {:ok, conn}
         end
 
         def render(assigns) do
@@ -92,7 +92,7 @@ defmodule KinoHtmx.ComponentCell do
         end
       end
 
-      Kino.nothing()
+      unquote(module_name).kino_output()
     end
   end
 
