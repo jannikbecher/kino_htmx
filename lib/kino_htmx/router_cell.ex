@@ -73,9 +73,9 @@ defmodule KinoHtmx.RouterCell do
     [
       quote do
         defmodule Htmx.Component.Get.Root do
-          use Htmx.Component, type: "get", path: "/"
+          use Htmx.Component, method: "get", path: "/"
 
-          def mount(_), do: {:ok, %{}}
+          def mount(conn), do: {:ok, conn}
 
           def render(assigns) do
             unquote(
@@ -100,8 +100,6 @@ defmodule KinoHtmx.RouterCell do
             )
           end
         end
-
-        Kino.nothing()
       end,
       quote do
         defmodule Router do
@@ -115,8 +113,8 @@ defmodule KinoHtmx.RouterCell do
 
           unquote(
             for component <- attrs["components"] do
-              {type, path} = component.get_http_method()
-              "#{type} \"#{path}\", to: #{component}"
+              {method, path} = component.get_http_method()
+              "#{method} \"#{path}\", to: #{component}"
             end
             |> Enum.join("\n\n")
             |> Code.string_to_quoted!()
@@ -126,13 +124,13 @@ defmodule KinoHtmx.RouterCell do
             send_resp(conn, 404, "not found")
           end
         end
-
-        Kino.nothing()
       end,
       quote do
         bandit = {Bandit, plug: Router, scheme: :http, port: unquote(attrs["port"])}
         Kino.start_child(bandit)
-        Kino.nothing()
+      end,
+      quote do
+        Htmx.Router.kino_output()
       end
     ]
   end

@@ -5,7 +5,7 @@ defmodule Htmx.Component do
   @callback mount(Plug.Conn.t()) :: {:ok, Plug.Conn.t()}
   @callback render(map()) :: String.t()
   defmacro __using__(opts) do
-    type = Keyword.get(opts, :type)
+    method = Keyword.get(opts, :method)
     path = Keyword.get(opts, :path)
 
     quote do
@@ -22,10 +22,10 @@ defmodule Htmx.Component do
         send_resp(conn, 200, html)
       end
 
-      def get_http_method, do: {unquote(type), unquote(path)}
+      def get_http_method, do: {unquote(method), unquote(path)}
 
       def kino_output() do
-        conn = Plug.Test.conn(unquote(type), unquote(path))
+        conn = Plug.Test.conn(unquote(method), unquote(path))
         {:ok, conn} = mount(conn)
         # TODO: generate random data
         assigns =

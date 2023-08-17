@@ -7,14 +7,14 @@ defmodule KinoHtmx.ComponentCell do
 
   @impl true
   def init(attrs, ctx) do
-    type = attrs["type"] || "get"
+    method = attrs["method"] || "get"
     path = attrs["path"] || "/"
     assigns = attrs["assigns"] || "%{}"
     html = attrs["html"] || ""
 
     ctx =
       assign(ctx,
-        type: type,
+        method: method,
         path: path,
         assigns: assigns,
         html: html
@@ -27,7 +27,7 @@ defmodule KinoHtmx.ComponentCell do
   def handle_connect(ctx) do
     {:ok,
      %{
-       type: ctx.assigns.type,
+       method: ctx.assigns.method,
        path: ctx.assigns.path,
        assigns: ctx.assigns.assigns,
        html: ctx.assigns.html
@@ -48,7 +48,7 @@ defmodule KinoHtmx.ComponentCell do
   @impl true
   def to_attrs(ctx) do
     %{
-      "type" => ctx.assigns.type,
+      "method" => ctx.assigns.method,
       "path" => ctx.assigns.path,
       "assigns" => ctx.assigns.assigns,
       "html" => ctx.assigns.html
@@ -63,17 +63,17 @@ defmodule KinoHtmx.ComponentCell do
   end
 
   def to_quoted(%{
-        "type" => type,
+        "method" => method,
         "path" => path,
         "assigns" => assigns,
         "html" => html
       }) do
     module_name =
-      Module.concat([Htmx.Component, String.capitalize(type), path_to_module_name(path)])
+      Module.concat([Htmx.Component, String.capitalize(method), path_to_module_name(path)])
 
     quote do
       defmodule unquote(module_name) do
-        use Htmx.Component, type: unquote(type), path: unquote(path)
+        use Htmx.Component, method: unquote(method), path: unquote(path)
 
         def mount(conn) do
           unquote(assigns |> Code.string_to_quoted!())
