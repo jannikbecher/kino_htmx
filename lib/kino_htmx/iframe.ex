@@ -3,10 +3,8 @@ defmodule KinoHtmx.Iframe do
 
   use Kino.JS
 
-  alias KinoHtmx.Settings
-
   def new() do
-    port = Settings.get_port()
+    port = Application.get_env(:kino_htmx, :port, 8080)
     Kino.JS.new(__MODULE__, port)
   end
 

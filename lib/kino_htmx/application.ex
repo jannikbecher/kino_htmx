@@ -8,9 +8,7 @@ defmodule KinoHtmx.Application do
     Kino.SmartCell.register(KinoHtmx.RouterCell)
     Kino.SmartCell.register(KinoHtmx.ComponentCell)
 
-    children = [
-      KinoHtmx.Settings
-    ]
+    children = []
 
     opts = [strategy: :one_for_one, name: KinoHtmx.Supervisor]
     Supervisor.start_link(children, opts)

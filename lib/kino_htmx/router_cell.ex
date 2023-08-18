@@ -5,11 +5,9 @@ defmodule KinoHtmx.RouterCell do
   use Kino.JS.Live
   use Kino.SmartCell, name: "HTMX Router"
 
-  alias KinoHtmx.Settings
-
   @impl true
   def init(attrs, ctx) do
-    port = attrs["port"] || 5000
+    port = attrs["port"] || 8080
     source = attrs["source"] || ""
 
     ctx =
@@ -58,7 +56,7 @@ defmodule KinoHtmx.RouterCell do
     port = params["port"] || ctx.assigns.port
     source = params["source"] || ctx.assigns.source
     broadcast_event(ctx, "update", %{"port" => port, "source" => source})
-    Settings.set_port(port)
+    Application.put_env(:kino_htmx, :port, port)
     {:noreply, assign(ctx, port: port, source: source)}
   end
 
