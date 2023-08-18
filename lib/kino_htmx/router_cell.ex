@@ -112,6 +112,7 @@ defmodule KinoHtmx.RouterCell do
           use Plug.Router
 
           plug(Plug.Logger)
+          plug(Plug.Parsers, parsers: [:urlencoded, :multipart], pass: ["*/*"])
           plug(:match)
           plug(:dispatch)
 
